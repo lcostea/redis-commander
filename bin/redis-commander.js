@@ -5,6 +5,7 @@ var redis = require('redis');
 var app = require('../lib/app');
 var fs = require('fs');
 var myUtils = require('../lib/util');
+var redisCommanderConfig = require('../lib/configuration');
 
 var redisConnections = [];
 redisConnections.getLast = myUtils.getLast;
@@ -66,21 +67,12 @@ if (args.help) {
   return process.exit(-1);
 }
 
-myUtils.getConfig(function (err, config) {
-  if (err) {
-    console.log("No config found or was invalid.\nUsing default configuration.");
-    config = {
-      "sidebarWidth": 250,
-      "locked": false,
-      "CLIHeight": 50,
-      "CLIOpen": false,
-      "default_connections": []
-    };
-  }
-  if (!config.default_connections) {
-    config.default_connections = [];
-  }
-  startDefaultConnections(config.default_connections, function (err) {
+configureApplication();
+
+
+function configureApplication() {
+
+  startDefaultConnections(redisCommanderConfig.default_connections, function (err) {
     if (err) {
       console.log(err);
       process.exit();
@@ -98,7 +90,7 @@ myUtils.getConfig(function (err, config) {
         "dbIndex": db
       };
 
-      if (!myUtils.containsConnection(config.default_connections, newDefault)) {
+      if (!myUtils.containsConnection(redisCommanderConfig.default_connections, newDefault)) {
         var client = redis.createClient(newDefault.port, newDefault.host);
         client.label = newDefault.label;
         redisConnections.push(client);
@@ -110,8 +102,8 @@ myUtils.getConfig(function (err, config) {
             }
           });
         }
-        config.default_connections.push(newDefault);
-        myUtils.saveConfig(config, function (err) {
+        redisCommanderConfig.default_connections.push(newDefault);
+        myUtils.saveConfig(redisCommanderConfig, function (err) {
           if (err) {
             console.log("Problem saving config.");
             console.error(err);
@@ -119,7 +111,7 @@ myUtils.getConfig(function (err, config) {
         });
         setUpConnection(redisConnections.getLast(), db);
       }
-    } else if (config.default_connections.length == 0) {
+    } else if (redisCommanderConfig.default_connections.length == 0) {
       var db = parseInt(args['redis-db']);
       if (db == null || isNaN(db)) {
         db = 0
@@ -129,7 +121,7 @@ myUtils.getConfig(function (err, config) {
     }
   });
   return startWebApp();
-});
+}
 
 function startDefaultConnections (connections, callback) {
   if (connections) {
