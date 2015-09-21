@@ -3,6 +3,7 @@
   "locked": "false",
   "CLIHeight": "100",
   "CLIOpen": "false",
+  "maxKeysToQuery": "1000",
   "default_connections": [
     {
       "label": "Local-Dev:0",
